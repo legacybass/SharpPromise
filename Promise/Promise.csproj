@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>SharpPromise</AssemblyName>
+    <RootNamespace>SharpPromise</RootNamespace>
   </PropertyGroup>
 
 </Project>
