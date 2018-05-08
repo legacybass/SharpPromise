@@ -4,6 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>SharpPromise</AssemblyName>
     <RootNamespace>SharpPromise</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Daniel Beus</Authors>
+    <Description>Fully compliant Promise library written in C#. Uses Task as the backing source and is fully compatible with async/await.</Description>
+    <RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
+    <PackageTags>promise</PackageTags>
+    <PackageReleaseNotes>Initial release for SharpPromise. Should work with all promise patterns available.</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
   </PropertyGroup>
 
 </Project>
