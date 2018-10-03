@@ -264,5 +264,82 @@ namespace Promise.Tests
 
 			await resultPromise;
 		}
+
+		[TestMethod, TestCategory("All")]
+		public async Task AllMethodWaitsForAllPromisesToFullfill()
+		{
+			bool promise2Resolve = false,
+				promise3Resolved = false;
+
+			int prom1Result = 42,
+				prom2Result = 73,
+				prom3Result = 13;
+
+			var promise1 = SharpPromise.Promise<int>.Resolve(prom1Result);
+			var promise2 = new SharpPromise.Promise<int>((resolve) =>
+			{
+				Task.Delay(1000).ContinueWith(_ => {
+					promise2Resolve = true;
+					resolve(prom2Result);
+				});
+			});
+			var promise3 = new SharpPromise.Promise<int>((resolve) =>
+			{
+				Task.Delay(2000).ContinueWith(_ =>
+				{
+					promise3Resolved = true;
+					resolve(prom3Result);
+				});
+			});
+
+			await SharpPromise.Promise<int>.All(promise1, promise2, promise3)
+			.Then(results =>
+			{
+				promise1.State.ShouldBe(PromiseState.Fulfilled);
+				promise2Resolve.ShouldBeTrue("Promise 2 did not resolve in time");
+				promise3Resolved.ShouldBeTrue("Promise 3 did not resolve in time");
+
+				results.Length.ShouldBe(3);
+				results[0].ShouldBe(prom1Result);
+				results[1].ShouldBe(prom2Result);
+				results[2].ShouldBe(prom3Result);
+			});
+		}
+
+		[TestMethod, TestCategory("Cast")]
+		public void CastPromiseToTask()
+		{
+			int result = 42;
+
+			Action<int> resolver = null;
+			var promise = new Promise<int>(r => resolver = r);
+
+			Task<int> test = promise;
+
+			test.ShouldNotBeNull();
+			test.IsCompleted.ShouldBeFalse();
+
+			resolver(result);
+
+			test.IsCompleted.ShouldBeTrue();
+			test.Result.ShouldBe(result);
+		}
+
+		[TestMethod, TestCategory("Cast")]
+		public void CastTaskToPromise()
+		{
+			var result = 42;
+			var completionSource = new TaskCompletionSource<int>();
+			var task = completionSource.Task;
+
+			Promise<int> promise = task;
+
+			promise.State.ShouldBe(PromiseState.Pending);
+
+			completionSource.SetResult(result);
+
+			promise.State.ShouldBe(PromiseState.Fulfilled);
+			promise.Then(i => i.ShouldBe(result));
+		}
 	}
 }
