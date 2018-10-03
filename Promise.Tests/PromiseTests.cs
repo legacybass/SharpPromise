@@ -222,5 +222,36 @@ namespace Promise.Tests
 
 			othersWereCalled.ShouldBeFalse();
 		}
+
+		[TestMethod, TestCategory("Cast")]
+		public void CastPromiseToTask()
+		{
+			Action resolver = null;
+			var promise = new SharpPromise.Promise(r => resolver = r);
+
+			Task test = promise;
+
+			test.ShouldNotBeNull();
+			test.IsCompleted.ShouldBeFalse();
+
+			resolver();
+
+			test.IsCompleted.ShouldBeTrue();
+		}
+
+		[TestMethod, TestCategory("Cast")]
+		public void CastTaskToPromise()
+		{
+			var completionSource = new TaskCompletionSource<int>();
+			var task = completionSource.Task;
+
+			SharpPromise.Promise promise = task;
+
+			promise.State.ShouldBe(PromiseState.Pending);
+
+			completionSource.SetResult(0);
+
+			promise.State.ShouldBe(PromiseState.Fulfilled);
+		}
 	}
 }

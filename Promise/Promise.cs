@@ -10,6 +10,16 @@ namespace SharpPromise
 		public static IPromise Resolve() => new Promise(Task.CompletedTask);
 		public static IPromise Reject(Exception e) => new Promise(Task.FromException(e));
 
+		public static implicit operator Task(Promise promise)
+		{
+			return promise.BackingTask;
+		}
+
+		public static implicit operator Promise(Task task)
+		{
+			return new Promise(task);
+		}
+
 		public PromiseState State
 		{
 			get
@@ -162,6 +172,8 @@ namespace SharpPromise
 	{
 		public static IPromise<T> Resolve(T arg) => new Promise<T>(Task<T>.FromResult(arg));
 		public new static IPromise<T> Reject(Exception ex) => new Promise<T>(Task<T>.FromException<T>(ex));
+		public static implicit operator Task<T>(Promise<T> promise) => promise.Task;
+		public static implicit operator Promise<T>(Task<T> task) => new Promise<T>(task);
 
 		protected Task<T> Task { get; set; }
 		protected override Task BackingTask { get => Task; }

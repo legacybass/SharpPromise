@@ -264,5 +264,41 @@ namespace Promise.Tests
 
 			await resultPromise;
 		}
+
+		[TestMethod, TestCategory("Cast")]
+		public void CastPromiseToTask()
+		{
+			int result = 42;
+
+			Action<int> resolver = null;
+			var promise = new Promise<int>(r => resolver = r);
+
+			Task<int> test = promise;
+
+			test.ShouldNotBeNull();
+			test.IsCompleted.ShouldBeFalse();
+
+			resolver(result);
+
+			test.IsCompleted.ShouldBeTrue();
+			test.Result.ShouldBe(result);
+		}
+
+		[TestMethod, TestCategory("Cast")]
+		public void CastTaskToPromise()
+		{
+			var result = 42;
+			var completionSource = new TaskCompletionSource<int>();
+			var task = completionSource.Task;
+
+			Promise<int> promise = task;
+
+			promise.State.ShouldBe(PromiseState.Pending);
+
+			completionSource.SetResult(result);
+
+			promise.State.ShouldBe(PromiseState.Fulfilled);
+			promise.Then(i => i.ShouldBe(result));
+		}
 	}
 }
