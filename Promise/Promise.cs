@@ -137,6 +137,41 @@ namespace SharpPromise
 			return new Promise<T>(resultTask);
 		}
 
+		public IPromise Then(Func<IPromise> onFulfilled) => Then(onFulfilled, (Action)null);
+		public IPromise Then(Func<IPromise> onFulfilled, Action onRejected) => Then(onFulfilled, ex => onRejected?.Invoke());
+		public IPromise Then(Func<IPromise> onFulfilled, Action<Exception> onRejected)
+		{
+			if (onFulfilled == null)
+				throw new ArgumentNullException(nameof(onFulfilled), "Resolved callback cannot be null");
+			if (onRejected == null)
+				throw new ArgumentNullException(nameof(onRejected), "Rejected callback cannot be null");
+
+			var completionSource = new TaskCompletionSource<int>();
+
+			BackingTask.ContinueWith(task =>
+			{
+				if (task.IsFaulted)
+				{
+					onRejected(task.Exception);
+					completionSource.SetException(task.Exception);
+				}
+				else
+				{
+					try
+					{
+						onFulfilled().Then(() => completionSource.SetResult(42))
+						.Catch(ex => completionSource.SetException(ex));
+					}
+					catch (Exception ex)
+					{
+						completionSource.SetException(ex);
+					}
+				}
+			});
+
+			return new Promise(completionSource.Task);
+		}
+
 		public IPromise<T> Then<T>(Func<IPromise<T>> onFulfilled) => Then(onFulfilled, (Action)null);
 		public IPromise<T> Then<T>(Func<IPromise<T>> onFulfilled, Action onRejected) => Then(onFulfilled, ex => onRejected?.Invoke());
 		public IPromise<T> Then<T>(Func<IPromise<T>> onFulfilled, Action<Exception> onRejected)
@@ -208,7 +243,14 @@ namespace SharpPromise
 			var resultTask = BackingTask.ContinueWith(task =>
 			{
 				if (task.IsFaulted)
-					onError?.Invoke(task.Exception);
+				{
+					if(task.Exception is AggregateException ae)
+					{
+						onError?.Invoke(ae.InnerException);
+					}
+					else
+						onError?.Invoke(task.Exception);
+				}
 			});
 
 			return new Promise(resultTask);
