@@ -204,6 +204,58 @@ namespace Promise.Tests
 			});
 		}
 
+		[TestMethod, TestCategory("Then:Promise")]
+		public async Task ThenReturnsPromiseWithResult()
+		{
+			bool hasResolved = false;
+
+			var testPromise = SharpPromise.Promise.Resolve()
+			.Then(() =>
+			{
+				return new SharpPromise.Promise((resolve) =>
+				{
+					resolve();
+				})
+				.Then(() =>
+				{
+					hasResolved = true;
+				});
+			});
+
+			await testPromise.Then(() =>
+			{
+				hasResolved.ShouldBeTrue();
+			});
+		}
+
+		[TestMethod, TestCategory("Then:Promise")]
+		public async Task ThenReturnsPromiseWithException()
+		{
+			bool hasResolved = false;
+
+			var testPromise = SharpPromise.Promise.Resolve()
+			.Then(() =>
+			{
+				return new SharpPromise.Promise((resolve, reject) =>
+				{
+					reject(new Exception());
+				})
+				.Then(() =>
+				{
+					hasResolved = true;
+				});
+			});
+
+			await testPromise.Then(() =>
+			{
+				Assert.Fail();
+			})
+			.Catch(ex =>
+			{
+				hasResolved.ShouldBeFalse();
+			});
+		}
+
 		[TestMethod, TestCategory("Catch")]
 		public async Task CatchDealsWithExceptionFurtherUpTheChain()
 		{
@@ -221,6 +273,37 @@ namespace Promise.Tests
 			.Catch(ex => ex.ShouldBeAssignableTo<Exception>());
 
 			othersWereCalled.ShouldBeFalse();
+		}
+
+		[TestMethod, TestCategory("All")]
+		public async Task AllMethodWaitsForAllPromisesToFullfill()
+		{
+			bool promise2Resolve = false,
+				promise3Resolved = false;
+
+			var promise1 = SharpPromise.Promise.Resolve();
+			var promise2 = new SharpPromise.Promise((resolve) =>
+			{
+				Task.Delay(1000).ContinueWith(_ => {
+					promise2Resolve = true;
+					resolve();
+				});
+			});
+			var promise3 = new SharpPromise.Promise((resolve) =>
+			{
+				Task.Delay(2000).ContinueWith(_ =>
+				{
+					promise3Resolved = true;
+					resolve();
+				});
+			});
+
+			await SharpPromise.Promise.All(promise1, promise2, promise3)
+			.Then(() =>
+			{
+				promise2Resolve.ShouldBeTrue("Promise 2 did not resolve in time");
+				promise3Resolved.ShouldBeTrue("Promise 3 did not resolve in time");
+			});
 		}
 
 		[TestMethod, TestCategory("Cast")]
