@@ -9,8 +9,16 @@
     <Description>Fully compliant Promise library written in C#. Uses Task as the backing source and is fully compatible with async/await.</Description>
     <RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
     <PackageTags>promise</PackageTags>
-    <PackageReleaseNotes>Initial release for SharpPromise. Should work with all promise patterns available.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added the following:
+- Added Promise.All for both the plain and generic promise classes
+- Added an implicit cast between Promise and Task to better allow for cross integration
+
+Fixed the following:
+- When returning a Promise from Then, the resulting Promise now properly forwards the result of the internal promise
+- Exceptions now return the inner exception being passed along, not the AggregateException</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
+    <Version>1.1.0</Version>
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
 </Project>
