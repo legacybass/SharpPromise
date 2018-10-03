@@ -219,13 +219,15 @@ namespace Promise.Tests
 				.Then(() =>
 				{
 					hasResolved = true;
+					return hasResolved;
 				});
 			});
 
 			await testPromise.Then(() =>
 			{
-				hasResolved.ShouldBeTrue();
-			});
+				hasResolved.ShouldBeTrue("Returned promise did not resolve before reaching this point");
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
 		}
 
 		[TestMethod, TestCategory("Then:Promise")]
@@ -270,9 +272,9 @@ namespace Promise.Tests
 			.Then(() => throw exception)
 			.Then(() => { othersWereCalled = true; })
 			.Then(() => { othersWereCalled = true; })
-			.Catch(ex => ex.ShouldBeAssignableTo<Exception>());
+			.Catch(ex => ex.ShouldBeAssignableTo<TaskCanceledException>());
 
-			othersWereCalled.ShouldBeFalse();
+			othersWereCalled.ShouldBeFalse("Then calls after exception should not be called");
 		}
 
 		[TestMethod, TestCategory("All")]

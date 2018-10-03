@@ -22,6 +22,12 @@ namespace SharpPromise
 		IPromise<T> Then<T>(Func<T> onFulfilled);
 		IPromise<T> Then<T>(Func<T> onFulfilled, Action onRejected);
 		IPromise<T> Then<T>(Func<T> onFulfilled, Action<Exception> onRejected);
+		IPromise<T> Then<T>(Func<IPromise<T>> onFulfilled);
+		IPromise<T> Then<T>(Func<IPromise<T>> onFulfilled, Action onRejected);
+		IPromise<T> Then<T>(Func<IPromise<T>> onFulfilled, Action<Exception> onRejected);
+		IPromise Then(Func<IPromise> onFulfilled);
+		IPromise Then(Func<IPromise> onFulfilled, Action onRejected);
+		IPromise Then(Func<IPromise> onFulfilled, Action<Exception> onRejected);
 		TaskAwaiter GetAwaiter();
 	}
 
