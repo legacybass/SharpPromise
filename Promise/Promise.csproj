@@ -8,7 +8,7 @@
     <Authors>Daniel Beus</Authors>
     <Description>Fully compliant Promise library written in C#. Uses Task as the backing source and is fully compatible with async/await.</Description>
     <RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
-    <PackageTags>promise</PackageTags>
+    <PackageTags>promise, task</PackageTags>
     <PackageReleaseNotes>Change list:
 - Added handling of Then calls that return tasks. This means you can do something like: Promise.Resolve().Then(() =&gt; Service.SomethingThatReturnsTask()); and the code will still run with promises.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
