@@ -8,6 +8,8 @@ using SharpPromise;
 
 namespace Promise.Tests
 {
+
+#pragma warning disable CC0031 // Check for null before calling a delegate
 	[TestClass]
 	public class PromiseGenericTests
 	{
@@ -43,7 +45,7 @@ namespace Promise.Tests
 		public void SetsCorrectStateOnEmptyResolve()
 		{
 			Action<int> resolver = null;
-			int expected = 42;
+			const int expected = 42;
 
 			IPromise<int> promise = new SharpPromise.Promise<int>((resolve) =>
 			{
@@ -117,7 +119,7 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:NoReturn"), ExpectedException(typeof(ArgumentNullException))]
 		public async Task ThrowsOnNullResolvedCallback()
 		{
-			int expected = 42;
+			const int expected = 42;
 			await new Promise<int>(resolve => { resolve(expected); }).Then(null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
@@ -125,7 +127,7 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:NoReturn"), ExpectedException(typeof(ArgumentNullException))]
 		public async Task ThrowsOnNullRejectedCallback()
 		{
-			int expected = 42;
+			const int expected = 42;
 			await new SharpPromise.Promise<int>(resolve => { resolve(expected); }).Then(() => { }, (Action<Exception>)null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
@@ -135,7 +137,7 @@ namespace Promise.Tests
 		{
 			Action<int> resolver = null;
 			var wasCalled = false;
-			int expected = 42;
+			const int expected = 42;
 
 			IPromise<int> promise = new SharpPromise.Promise<int>(resolve => resolver = resolve);
 
@@ -156,7 +158,7 @@ namespace Promise.Tests
 		{
 			Action<int> resolver = null;
 			var wasCalled = false;
-			int expected = 42;
+			const int expected = 42;
 
 			IPromise<int> promise = new SharpPromise.Promise<int>(resolve => resolver = resolve);
 
@@ -175,8 +177,8 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:NoReturn")]
 		public async Task ChainedThensExecuteInCorrectOrder()
 		{
-			int count = 1;
-			int expected = 42;
+			var count = 1;
+			const int expected = 42;
 			IPromise<int> promise = new SharpPromise.Promise<int>(resolve =>
 			{
 				Task.Delay(200).Wait();
@@ -190,7 +192,7 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:Return"), ExpectedException(typeof(ArgumentNullException))]
 		public void ThrowsOnNullResolvedCallbackWithReturn()
 		{
-			int expected = 42;
+			const int expected = 42;
 			new SharpPromise.Promise<int>(resolve => { resolve(expected); }).Then((Func<bool>)null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
@@ -198,15 +200,15 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:Return"), ExpectedException(typeof(ArgumentNullException))]
 		public async Task ThrowsOnNullRejectedCallbackWithReturn()
 		{
-			int expected = 42;
-			await new SharpPromise.Promise<int>(resolve => { resolve(expected); }).Then(value => {  }, (Action<Exception>)null);
+			const int expected = 42;
+			await new Promise<int>(resolve => { resolve(expected); }).Then(value => {  }, (Action<Exception>)null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
 
 		[TestMethod, TestCategory("Then:Return")]
 		public async Task ReturnedValueFromOneThenIsPassedToNextThen()
 		{
-			var value = 42;
+			const int value = 42;
 			IPromise<int> promise = new SharpPromise.Promise<int>(resolve =>
 			{
 				resolve(value);
@@ -230,11 +232,36 @@ namespace Promise.Tests
 			});
 		}
 
+		[TestMethod, TestCategory("Then:Task")]
+		public async Task ThenReturnsTaskWithResult()
+		{
+			var hasResolved = false;
+			const int result = 42;
+
+			// This form of Resolve is needed to get the generic form of IPromise back. The base interface breaks the test.
+			var testPromise = Promise<int>.Resolve(0)
+			.Then(() =>
+			{
+				return Task.CompletedTask.ContinueWith(_ =>
+				{
+					hasResolved = true;
+					return result;
+				});
+			});
+
+			await testPromise.Then(val =>
+			{
+				hasResolved.ShouldBeTrue();
+				val.ShouldBe(result);
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
 		[TestMethod, TestCategory("Catch")]
 		public async Task CatchDealsWithExceptionFurtherUpTheChain()
 		{
-			bool othersWereCalled = false;
-			int expected = 42;
+			var othersWereCalled = false;
+			const int expected = 42;
 
 			var exception = new TaskCanceledException();
 
@@ -242,7 +269,7 @@ namespace Promise.Tests
 
 			await promise.Then(() => { })
 			.Then(() => { })
-			.Then(() => throw exception)
+			.Then((Action)(() => throw exception))
 			.Then(() => { othersWereCalled = true; })
 			.Then(() => { othersWereCalled = true; })
 			.Catch(ex => ex.ShouldBeAssignableTo<Exception>());
@@ -254,8 +281,8 @@ namespace Promise.Tests
 		public async Task IfReturnValueIsAPromiseReturnValueOfThatPromiseIsChained()
 		{
 			Action<int> returnedResolver = null;
-			int expected = 42;
-			var returnedPromise = new SharpPromise.Promise<int>(resolve => returnedResolver = resolve);
+			const int expected = 42;
+			var returnedPromise = new Promise<int>(resolve => returnedResolver = resolve);
 			var testedPromise = new SharpPromise.Promise(resolve => resolve());
 			var resultPromise = testedPromise.Then(() => returnedPromise)
 			.Then(result => result.ShouldBe(expected));
@@ -268,10 +295,10 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("All")]
 		public async Task AllMethodWaitsForAllPromisesToFullfill()
 		{
-			bool promise2Resolve = false,
-				promise3Resolved = false;
+			var promise2Resolve = false;
+			var promise3Resolved = false;
 
-			int prom1Result = 42,
+			const int prom1Result = 42,
 				prom2Result = 73,
 				prom3Result = 13;
 
@@ -309,7 +336,7 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Cast")]
 		public void CastPromiseToTask()
 		{
-			int result = 42;
+			const int result = 42;
 
 			Action<int> resolver = null;
 			var promise = new Promise<int>(r => resolver = r);
@@ -341,5 +368,7 @@ namespace Promise.Tests
 			promise.State.ShouldBe(PromiseState.Fulfilled);
 			promise.Then(i => i.ShouldBe(result));
 		}
+
+#pragma warning restore CC0031 // Check for null before calling a delegate
 	}
 }
