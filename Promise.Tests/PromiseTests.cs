@@ -8,9 +8,11 @@ using System.Threading;
 
 namespace Promise.Tests
 {
+#pragma warning disable CC0031 // Check for null before calling a delegate
 	[TestClass]
 	public class PromiseTests
 	{
+
 		[TestMethod, TestCategory("Promise:Constructor"), ExpectedException(typeof(ArgumentNullException), "No exception thrown when a null callback was used")]
 		public void ThrowsExceptionIfNoCallbackPassedForAction()
 		{
@@ -98,7 +100,7 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:NoReturn"), ExpectedException(typeof(ArgumentNullException))]
 		public void ThrowsOnNullResolvedCallback()
 		{
-			new SharpPromise.Promise(resolve => { resolve(); }).Then(null);
+			new SharpPromise.Promise(resolve => { resolve(); }).Then((Action)null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
 
@@ -207,7 +209,7 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Then:Promise")]
 		public async Task ThenReturnsPromiseWithResult()
 		{
-			bool hasResolved = false;
+			var hasResolved = false;
 
 			var testPromise = SharpPromise.Promise.Resolve()
 			.Then(() =>
@@ -258,10 +260,77 @@ namespace Promise.Tests
 			});
 		}
 
+		[TestMethod, TestCategory("Then:Task")]
+		public async Task ThenReturnsTask()
+		{
+			var hasResolved = false;
+			var task = Task.CompletedTask;
+
+			var testPromise = SharpPromise.Promise.Resolve()
+			.Then(() =>
+			{
+				return task.ContinueWith(_ =>
+				{
+					hasResolved = true;
+				});
+			});
+
+			await testPromise.Then(() =>
+			{
+				hasResolved.ShouldBeTrue("Promise did not wait for returned task to complete.");
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
+		[TestMethod, TestCategory("Then:Task")]
+		public async Task ThenReturnsTaskWithResult()
+		{
+			var hasResolved = false;
+			const int result = 42;
+
+			// This form of Resolve is needed to get the generic form of IPromise back. The base interface breaks the test.
+			var testPromise = SharpPromise.Promise.Resolve()
+			.Then(() =>
+			{
+				return Task.CompletedTask.ContinueWith(_ =>
+				{
+					hasResolved = true;
+					return result;
+				});
+			});
+
+			await testPromise.Then(val =>
+			{
+				hasResolved.ShouldBeTrue();
+				val.ShouldBe(result);
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
+		[TestMethod, TestCategory("Then:Task")]
+		public void ThenReturnsTaskThatFails()
+		{
+			var source = new TaskCompletionSource<int>();
+			var ex = new InternalTestFailureException("Task failed, but that's what we wanted.");
+
+			var testPromise = SharpPromise.Promise.Resolve()
+			.Then(() =>
+			{
+				source.SetException(ex);
+				return source.Task;
+			});
+
+			testPromise.Then(() => 0.ShouldSatisfyAllConditions($"Promise resolved, rather than rejecting with failed task.", () => throw ex),
+				resultException =>
+				{
+					resultException.ShouldBe(ex);
+				});
+		}
+
 		[TestMethod, TestCategory("Catch")]
 		public async Task CatchDealsWithExceptionFurtherUpTheChain()
 		{
-			bool othersWereCalled = false;
+			var othersWereCalled = false;
 
 			var exception = new TaskCanceledException();
 
@@ -269,7 +338,7 @@ namespace Promise.Tests
 
 			await promise.Then(() => { })
 			.Then(() => { })
-			.Then(() => throw exception)
+			.Then((Action)(() => throw exception))
 			.Then(() => { othersWereCalled = true; })
 			.Then(() => { othersWereCalled = true; })
 			.Catch(ex => ex.ShouldBeAssignableTo<TaskCanceledException>());
@@ -339,4 +408,5 @@ namespace Promise.Tests
 			promise.State.ShouldBe(PromiseState.Fulfilled);
 		}
 	}
+#pragma warning restore CC0031 // Check for null before calling a delegate
 }

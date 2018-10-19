@@ -28,19 +28,18 @@ namespace SharpPromise
 		public static implicit operator Task<T>(Promise<T> promise) => promise.Task;
 		public static implicit operator Promise<T>(Task<T> task) => new Promise<T>(task);
 
-		//public static IPromise All()
-		//{
-
-		//}
-
 		protected Task<T> Task { get; set; }
 		protected override Task BackingTask { get => Task; }
 
+#pragma warning disable CC0031 // Check for null before calling a delegate
 		public Promise(Action<Action<T>> callback) : this(callback == null ? null : (Action<Action<T>, Action>)((resolve, reject) => callback(resolve)))
+#pragma warning restore CC0031 // Check for null before calling a delegate
 		{
 		}
 
+#pragma warning disable CC0031 // Check for null before calling a delegate
 		public Promise(Action<Action<T>, Action> callback) : this(callback == null ? null : (Action<Action<T>, Action<Exception>>)((resolve, reject) => callback(resolve, () => reject(new Exception()))))
+#pragma warning restore CC0031 // Check for null before calling a delegate
 		{
 		}
 
@@ -71,10 +70,7 @@ namespace SharpPromise
 		public IPromise Then(Action<T> onFulfilled, Action onRejected) => Then(onFulfilled, ex => onRejected?.Invoke());
 		public IPromise Then(Action<T> onFulfilled, Action<Exception> onRejected)
 		{
-			if (onFulfilled == null)
-				throw new ArgumentNullException(nameof(onFulfilled), "Resolved callback cannot be null.");
-			if (onRejected == null)
-				throw new ArgumentNullException(nameof(onRejected), "Rejected callback cannot be null.");
+			ValidCallbacks(onFulfilled, onRejected, nameof(onFulfilled), nameof(onRejected));
 
 			var resultTask = Task.ContinueWith(task =>
 			{
@@ -91,10 +87,7 @@ namespace SharpPromise
 		public IPromise<TResult> Then<TResult>(Func<T, TResult> onFulfilled, Action onRejected) => Then(onFulfilled, ex => onRejected?.Invoke());
 		public IPromise<TResult> Then<TResult>(Func<T, TResult> onFulfilled, Action<Exception> onRejected)
 		{
-			if (onFulfilled == null)
-				throw new ArgumentNullException(nameof(onFulfilled), "Resolved callback cannot be null");
-			if (onRejected == null)
-				throw new ArgumentNullException(nameof(onRejected), "Rejected callback cannot be null");
+			ValidCallbacks(onFulfilled, onRejected, nameof(onFulfilled), nameof(onRejected));
 
 			var resultTask = Task.ContinueWith<TResult>(task =>
 			{
