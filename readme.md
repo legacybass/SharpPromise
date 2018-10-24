@@ -3,6 +3,7 @@
 SharpPromise is a library intended to bring JavaScript's promise patterns to C#.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/0hd8gh5fci88hmtr?svg=true)](https://ci.appveyor.com/project/legacybass/sharppromise)
+[![NuGet](https://img.shields.io/nuget/v/SharpPromise.svg?maxAge=2592000)](https://www.nuget.org/packages/SharpPromise/)
 
 ## Why Promises in C#?
 The Task library gets very close, but still leaves a few things to be desired. For example, in JS you can use `somePromise.then(() => 42).then(result => console.log(result))` and have `42` logged to the console. In the Task library, the argument to `ContinueWith` is a task, and must be dealt with before you can get to the actual value. Promise's more clean interface makes it easy to get to the data you want, while still dealing with errors using the `catch` method.
