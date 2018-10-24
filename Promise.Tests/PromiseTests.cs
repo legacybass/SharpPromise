@@ -264,22 +264,41 @@ namespace Promise.Tests
 		public async Task ThenReturnsTask()
 		{
 			var hasResolved = false;
-			var task = Task.CompletedTask;
+			var chainsCalled = false;
 
 			var testPromise = SharpPromise.Promise.Resolve()
 			.Then(() =>
 			{
-				return task.ContinueWith(_ =>
+				var firstTask = Task.Delay(50);
+				var secondTask = Task.Delay(10);
+				var thirdTask = Task.Delay(100);
+
+				return Task.WhenAll(firstTask, secondTask, thirdTask).ContinueWith(tasks =>
 				{
 					hasResolved = true;
 				});
+			})
+			.Then(() =>
+			{
+
+			})
+			.Then(() =>
+			{
+				chainsCalled = true;
 			});
 
 			await testPromise.Then(() =>
 			{
 				hasResolved.ShouldBeTrue("Promise did not wait for returned task to complete.");
+				chainsCalled.ShouldBeTrue("Chains were not called.");
 			})
 			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
+		[TestMethod]
+		public void MultipleThensReturnMultipleTasks()
+		{
+
 		}
 
 		[TestMethod, TestCategory("Then:Task")]
