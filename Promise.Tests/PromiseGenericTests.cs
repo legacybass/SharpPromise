@@ -333,6 +333,49 @@ namespace Promise.Tests
 			});
 		}
 
+		[TestMethod, TestCategory("All")]
+		public async Task AllMethodWaitsForAllTasksToFullfill()
+		{
+			var task2Resolve = false;
+			var task3Resolve = false;
+
+			var task2Time = DateTime.Now;
+			var task3Time = task2Time;
+
+			var result1 = 1;
+			var result2 = 2;
+			var result3 = 3;
+
+			var t1 = Task.FromResult(result1);
+			var t2 = Task.Delay(300).ContinueWith(_ =>
+			{
+				task2Resolve = true;
+				task2Time = DateTime.Now;
+				return result2;
+			});
+			var t3 = Task.Delay(100).ContinueWith(_ =>
+			{
+				task3Resolve = true;
+				task3Time = DateTime.Now;
+				return result3;
+			});
+
+			await SharpPromise.Promise<int>.All(t1, t2, t3)
+			.Then(results =>
+			{
+				task2Resolve.ShouldBeTrue("Task 2 did not resolve.");
+				task3Resolve.ShouldBeTrue("Task 3 did not resolve.");
+
+				task2Time.ShouldBeGreaterThan(task3Time, "Task 2 resolved before task 3");
+
+				results.ShouldNotBeNull("Results were null");
+				results.Length.ShouldBe(3, "Not all tasks returned a value");
+				results[0].ShouldBe(result1, "Task 1 result did not match");
+				results[1].ShouldBe(result2, "Task 2 result did not match");
+				results[2].ShouldBe(result3, "Task 3 result did not match");
+			});
+		}
+
 		[TestMethod, TestCategory("Cast")]
 		public void CastPromiseToTask()
 		{

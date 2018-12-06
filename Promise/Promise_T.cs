@@ -25,6 +25,15 @@ namespace SharpPromise
 			return new Promise<T[]>(task);
 		}
 
+		public static IPromise<T[]> All(params Task<T>[] tasks)
+		{
+			if (tasks == null || tasks.Length == 0)
+				return Promise<T[]>.Resolve(Enumerable.Empty<T>().ToArray());
+
+			var t = Task<T>.WhenAll(tasks);
+			return new Promise<T[]>(t);
+		}
+
 		public static implicit operator Task<T>(Promise<T> promise) => promise.Task;
 		public static implicit operator Promise<T>(Task<T> task) => new Promise<T>(task);
 
