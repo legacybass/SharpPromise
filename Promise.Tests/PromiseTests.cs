@@ -368,8 +368,8 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("All")]
 		public async Task AllMethodWaitsForAllPromisesToFullfill()
 		{
-			bool promise2Resolve = false,
-				promise3Resolved = false;
+			var promise2Resolve = false;
+			var promise3Resolved = false;
 
 			var promise1 = SharpPromise.Promise.Resolve();
 			var promise2 = new SharpPromise.Promise((resolve) =>
@@ -393,6 +393,37 @@ namespace Promise.Tests
 			{
 				promise2Resolve.ShouldBeTrue("Promise 2 did not resolve in time");
 				promise3Resolved.ShouldBeTrue("Promise 3 did not resolve in time");
+			});
+		}
+
+		[TestMethod, TestCategory("All")]
+		public async Task AllMethodWaitsForAllTasksToFullfill()
+		{
+			var task2Resolve = false;
+			var task3Resolve = false;
+
+			var task2Time = DateTime.Now;
+			var task3Time = task2Time;
+
+			var t1 = Task.FromResult(1);
+			var t2 = Task.Delay(300).ContinueWith(_ =>
+			{
+				task2Resolve = true;
+				task2Time = DateTime.Now;
+			});
+			var t3 = Task.Delay(100).ContinueWith(_ =>
+			{
+				task3Resolve = true;
+				task3Time = DateTime.Now;
+			});
+
+			await SharpPromise.Promise.All(t1, t2, t3)
+			.Then(() =>
+			{
+				task2Resolve.ShouldBeTrue("Task 2 did not resolve.");
+				task3Resolve.ShouldBeTrue("Task 3 did not resolve.");
+
+				task2Time.ShouldBeGreaterThan(task3Time, "Task 2 resolved before task 3");
 			});
 		}
 

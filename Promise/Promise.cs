@@ -25,6 +25,17 @@ namespace SharpPromise
 
 		public static IPromise All(IEnumerable<IPromise> promises) => All(promises.ToArray());
 
+		public static IPromise All(params Task[] tasks)
+		{
+			if (tasks == null || tasks.Length == 0)
+				return Resolve();
+
+			var task = Task.WhenAll(tasks);
+			return new Promise(task);
+		}
+
+		public static IPromise All(IEnumerable<Task> tasks) => All(tasks.ToArray());
+
 		public static implicit operator Task(Promise promise)
 		{
 			return promise.BackingTask;
