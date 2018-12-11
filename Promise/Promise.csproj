@@ -10,10 +10,12 @@
     <RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
     <PackageTags>promise, task</PackageTags>
     <PackageReleaseNotes>Change list:
-- Added All method that accepts Tasks and Task&lt;T&gt; as parameters without needing to use the explicit casting.</PackageReleaseNotes>
+- Added a Then&lt;T&gt; method that can return a Task&lt;Result&gt; and have a IPromise&lt;Result&gt; come back out
+  - i.e. You can now do: Promise.Then(() =&gt; TaskReturningMethod()).Then(result =&gt; OtherTaskReturningMethod(result)) and get a Promise back of the type returned by OtherTaskReturningMethod</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
-    <Version>1.3.0</Version>
+    <Version>1.4.0</Version>
     <NeutralLanguage>en</NeutralLanguage>
+    <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
 </Project>

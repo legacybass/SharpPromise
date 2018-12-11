@@ -257,6 +257,32 @@ namespace Promise.Tests
 			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
 		}
 
+		[TestMethod]
+		public async Task ThenWithParamReturnsTaskWithResult()
+		{
+			var hasResolved = false;
+			const int result1 = 73, result2 = 42;
+
+			var testPromise = Promise<int>.Resolve(0)
+			.Then(() =>
+			{
+				return Task.FromResult(result1);
+			})
+			.Then(previous =>
+			{
+				hasResolved = true;
+				return Task.FromResult((result1, result2));
+			});
+
+			await testPromise.Then(val =>
+			{
+				hasResolved.ShouldBeTrue();
+				val.result1.ShouldBe(result1);
+				val.result2.ShouldBe(result2);
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
 		[TestMethod, TestCategory("Catch")]
 		public async Task CatchDealsWithExceptionFurtherUpTheChain()
 		{

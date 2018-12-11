@@ -115,6 +115,42 @@ namespace SharpPromise
 			return new Promise<TResult>(resultTask);
 		}
 
+		public IPromise<TResult> Then<TResult>(Func<T, Task<TResult>> onFulfilled) => Then(onFulfilled, (Action)null);
+		public IPromise<TResult> Then<TResult>(Func<T, Task<TResult>> onFulfilled, Action onRejected) => Then(onFulfilled, ex => onRejected?.Invoke());
+		public IPromise<TResult> Then<TResult>(Func<T, Task<TResult>> onFulfilled, Action<Exception> onRejected)
+		{
+			ValidCallbacks(onFulfilled, onRejected, nameof(onFulfilled), nameof(onRejected));
+
+			var completionSource = new TaskCompletionSource<TResult>();
+
+#pragma warning disable CC0031 // Check for null before calling a delegate
+			Task.ContinueWith(task =>
+			{
+				if (task.IsFaulted)
+				{
+					onRejected(task.Exception);
+					completionSource.SetException(task.Exception);
+				}
+				else
+				{
+					onFulfilled(task.Result).ContinueWith(t =>
+					{
+						if (t.IsFaulted)
+						{
+							completionSource.SetException(t.Exception);
+						}
+						else
+						{
+							completionSource.SetResult(t.Result);
+						}
+					});
+				}
+			});
+#pragma warning restore CC0031 // Check for null before calling a delegate
+
+			return new Promise<TResult>(completionSource.Task);
+		}
+
 		TaskAwaiter<T> IPromise<T>.GetAwaiter() => Task.GetAwaiter();
 	}
 }
