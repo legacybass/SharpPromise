@@ -124,14 +124,6 @@ namespace Promise.Tests
 			Assert.Fail("Null resolve method did not throw exception");
 		}
 
-		[TestMethod, TestCategory("Then:NoReturn"), ExpectedException(typeof(ArgumentNullException))]
-		public async Task ThrowsOnNullRejectedCallback()
-		{
-			const int expected = 42;
-			await new SharpPromise.Promise<int>(resolve => { resolve(expected); }).Then(() => { }, (Action<Exception>)null);
-			Assert.Fail("Null resolve method did not throw exception");
-		}
-
 		[TestMethod, TestCategory("Then:NoReturn")]
 		public async Task ThenFiresAfterResolution()
 		{
@@ -143,7 +135,11 @@ namespace Promise.Tests
 
 			resolver.ShouldNotBeNull();
 
-			var other = promise.Then(() => wasCalled = true);
+			var other = promise.Then(i =>
+			{
+				wasCalled = true;
+				return 3;
+			});
 
 			resolver(expected);
 
@@ -166,7 +162,11 @@ namespace Promise.Tests
 
 			resolver(expected);
 
-			var other = promise.Then(() => wasCalled = true);
+			var other = promise.Then(i =>
+			{
+				wasCalled = true;
+				return 3;
+			});
 
 			await promise;
 			await other;
@@ -185,7 +185,7 @@ namespace Promise.Tests
 				resolve(expected);
 			});
 
-			await promise.Then(() => count++.ShouldBe(1))
+			await promise.Then(i => count++.ShouldBe(1))
 			.Then(() => count++.ShouldBe(2));
 		}
 
@@ -194,14 +194,6 @@ namespace Promise.Tests
 		{
 			const int expected = 42;
 			new SharpPromise.Promise<int>(resolve => { resolve(expected); }).Then((Func<bool>)null);
-			Assert.Fail("Null resolve method did not throw exception");
-		}
-
-		[TestMethod, TestCategory("Then:Return"), ExpectedException(typeof(ArgumentNullException))]
-		public async Task ThrowsOnNullRejectedCallbackWithReturn()
-		{
-			const int expected = 42;
-			await new Promise<int>(resolve => { resolve(expected); }).Then(value => {  }, (Action<Exception>)null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
 
@@ -240,7 +232,7 @@ namespace Promise.Tests
 
 			// This form of Resolve is needed to get the generic form of IPromise back. The base interface breaks the test.
 			var testPromise = Promise<int>.Resolve(0)
-			.Then(() =>
+			.Then(i =>
 			{
 				return Task.CompletedTask.ContinueWith(_ =>
 				{
@@ -257,14 +249,14 @@ namespace Promise.Tests
 			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
 		}
 
-		[TestMethod]
+		[TestMethod, TestCategory("Then:Task")]
 		public async Task ThenWithParamReturnsTaskWithResult()
 		{
 			var hasResolved = false;
 			const int result1 = 73, result2 = 42;
 
 			var testPromise = Promise<int>.Resolve(0)
-			.Then(() =>
+			.Then(i =>
 			{
 				return Task.FromResult(result1);
 			})
@@ -293,14 +285,14 @@ namespace Promise.Tests
 
 			var promise = new SharpPromise.Promise<int>(resolve => resolve(expected));
 
-			await promise.Then(() => { })
-			.Then(() => { })
-			.Then((Action)(() => throw exception))
+			await promise.Then(i => 42)
+			.Then(_ => 73)
+			.Then(_ => throw exception)
 			.Then(() => { othersWereCalled = true; })
 			.Then(() => { othersWereCalled = true; })
 			.Catch(ex => ex.ShouldBeAssignableTo<Exception>());
 
-			othersWereCalled.ShouldBeFalse();
+			othersWereCalled.ShouldBeFalse("Subsequent \"Then\" calls were made after failing.");
 		}
 
 		[TestMethod, TestCategory("Chaining")]
@@ -438,6 +430,46 @@ namespace Promise.Tests
 			promise.Then(i => i.ShouldBe(result));
 		}
 
+		[TestMethod, TestCategory("Finally")]
+		public async Task ValueIsPassedThroughFinally()
+		{
+			var wasCalled = false;
+			var value = 42;
+			await SharpPromise.Promise<int>.Resolve(value)
+			.Finally(() => { wasCalled = true; })
+			.Then(val => val.ShouldBe(value));
+
+			wasCalled.ShouldBeTrue();
+		}
+
+		[TestMethod, TestCategory("Finally")]
+		public async Task ExceptionIsPassedThroughFinally()
+		{
+			var wasCalled = false;
+			var message = "It was passed as expected.";
+			var value = new InternalTestFailureException(message);
+
+			await SharpPromise.Promise<int>.Reject(value)
+			.Finally(() => { wasCalled = true; })
+			.Catch(val => val.Message.ShouldBe(message));
+
+			wasCalled.ShouldBeTrue();
+		}
+
+		[TestMethod, TestCategory("Finally")]
+		public async Task ExceptionIsPassedThroughFinallyAndHandledInThen()
+		{
+			var wasCalled = false;
+			var wrongThenCalled = false;
+			var value = new InternalTestFailureException("It was passed as expected.");
+
+			await SharpPromise.Promise<int>.Reject(value)
+			.Finally(() => { wasCalled = true; })
+			.Then(() => { wrongThenCalled = true; }, val => val.ShouldBe(value));
+
+			wasCalled.ShouldBeTrue();
+			wrongThenCalled.ShouldBeFalse();
+		}
 #pragma warning restore CC0031 // Check for null before calling a delegate
 	}
 }
