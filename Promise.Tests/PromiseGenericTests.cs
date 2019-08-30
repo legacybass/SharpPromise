@@ -275,6 +275,50 @@ namespace Promise.Tests
 			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
 		}
 
+		[TestMethod, TestCategory("Then:Task")]
+		public async Task ThenReturnsTaskWithoutResult()
+		{
+			bool hasResolved = false;
+
+			var testPromise = Promise<int>.Resolve(0)
+			.Then(i =>
+			{
+				return Task.CompletedTask.ContinueWith(_ =>
+				{
+					hasResolved = true;
+				});
+			});
+
+			await testPromise.Then(() =>
+			{
+				hasResolved.ShouldBeTrue();
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
+		[TestMethod, TestCategory("Then:Task")]
+		public async Task ThenWithParamReturnsTaskWithoutResult()
+		{
+			bool hasResolved = false;
+			const int result1 = 73;
+
+			var testPromise = Promise<int>.Resolve(0)
+			.Then(_ =>
+			{
+				return Task.FromResult(result1);
+			})
+			.Then(previous =>
+			{
+				hasResolved = true;
+			});
+
+			await testPromise.Then(() =>
+			{
+				hasResolved.ShouldBeTrue();
+			})
+			.Catch(ex => 0.ShouldSatisfyAllConditions($"Something internal failed. {ex.Message}", () => throw ex));
+		}
+
 		[TestMethod, TestCategory("Catch")]
 		public async Task CatchDealsWithExceptionFurtherUpTheChain()
 		{
@@ -283,11 +327,11 @@ namespace Promise.Tests
 
 			var exception = new TaskCanceledException();
 
-			var promise = new SharpPromise.Promise<int>(resolve => resolve(expected));
+			var promise = new Promise<int>(resolve => resolve(expected));
 
 			await promise.Then(i => 42)
 			.Then(_ => 73)
-			.Then(_ => throw exception)
+			.Then((Action<int>)(_ => throw exception))
 			.Then(() => { othersWereCalled = true; })
 			.Then(() => { othersWereCalled = true; })
 			.Catch(ex => ex.ShouldBeAssignableTo<Exception>());
@@ -469,6 +513,68 @@ namespace Promise.Tests
 
 			wasCalled.ShouldBeTrue();
 			wrongThenCalled.ShouldBeFalse();
+		}
+
+		[TestMethod, TestCategory("Any")]
+		public async Task AnyReturnsValueOfFirstPromiseFinished()
+		{
+			int result = 73, result2 = 37;
+
+			IPromise<int> resolvingPromise = new SharpPromise.Promise<int>((resolve) =>
+			{
+				Task.Delay(500)
+				.ContinueWith(_ => resolve(result));
+			});
+
+			IPromise<int> neverEndingPromise = new SharpPromise.Promise<int>((resolve) =>
+			{
+				Task.Delay(700)
+				.ContinueWith(_ => resolve(result2));
+			});
+
+			IPromise<int> neverEndingStory = new SharpPromise.Promise<int>((Action<Action<int>, Action>)((resolve, reject) =>
+			{
+			}));
+
+			bool didFinish = false;
+
+			var promise = SharpPromise.Promise<int>.Any(resolvingPromise, neverEndingPromise, neverEndingStory)
+			.Then(val =>
+			{
+				didFinish = true;
+				val.ShouldBe(result);
+			});
+
+			var task = promise.AsTask();
+			task.Wait(1000);
+
+			didFinish.ShouldBeTrue();
+		}
+
+		[TestMethod, TestCategory("Any")]
+		public void AnyReturnsValueOfFirstTaskFinished()
+		{
+			int result = 73, result2 = 37;
+
+			var resolvingPromise = Task.Delay(500).ContinueWith(t => result);
+			var neverEndingPromise = Task.Delay(700).ContinueWith(t => result2);
+
+			var exceptedTask = new TaskCompletionSource<int>();
+			var neverEndingStory = exceptedTask.Task;
+
+			bool didFinish = false;
+
+			var promise = SharpPromise.Promise<int>.Any(resolvingPromise, neverEndingPromise, neverEndingStory)
+			.Then(val =>
+			{
+				didFinish = true;
+				val.ShouldBe(result);
+			});
+
+			var task = promise.AsTask();
+			task.Wait(1000);
+
+			didFinish.ShouldBeTrue();
 		}
 #pragma warning restore CC0031 // Check for null before calling a delegate
 	}

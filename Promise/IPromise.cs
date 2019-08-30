@@ -262,6 +262,11 @@ namespace SharpPromise
 		/// <returns></returns>
 		IPromise<TResult> Then<TResult>(Func<T, Task<TResult>> onFulfilled, Action<Exception> onRejected);
 
+
+		IPromise Then(Func<T, Task> onFulfilled);
+		IPromise Then(Func<T, Task> onFulfilled, Action onRejected);
+		IPromise Then(Func<T, Task> onFulfilled, Action<Exception> onRejected);
+
 		new TaskAwaiter<T> GetAwaiter();
 	}
 }

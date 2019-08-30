@@ -57,6 +57,37 @@ namespace SharpPromise
 			return new Promise<T[]>(t);
 		}
 
+		public static IPromise<T> Any(IEnumerable<IPromise<T>> promises) => Any(promises?.ToArray());
+		public static IPromise<T> Any(params IPromise<T>[] promises) => Any(promises?.Select(async p => await p));
+
+		public static IPromise<T> Any(IEnumerable<Task<T>> tasks) => Any(tasks?.ToArray());
+
+		public static IPromise<T> Any(params Task<T>[] tasks)
+		{
+			if (tasks == null || tasks.Length == 0)
+				return Resolve(default);
+
+			var completionSource = new TaskCompletionSource<T>();
+
+			System.Threading.Tasks.Task<T>.WhenAny<T>(tasks)
+			.ContinueWith(t =>
+			{
+				if(t.IsFaulted || t.Result.IsFaulted)
+				{
+					if (t.IsCompleted)
+						completionSource.SetException(t.Result.Exception);
+					else
+						completionSource.SetException(t.Exception);
+				}
+				else
+				{
+					completionSource.SetResult(t.Result.Result);
+				}
+			});
+
+			return new Promise<T>(completionSource.Task);
+		}
+
 		public static implicit operator Task<T>(Promise<T> promise) => promise.Task;
 		public static implicit operator Promise<T>(Task<T> task) => new Promise<T>(task);
 
@@ -176,6 +207,7 @@ namespace SharpPromise
 					try
 					{
 						onRejected?.Invoke(task.Exception);
+						resultTask.SetResult(default);
 					}
 					catch (Exception e)
 					{
@@ -214,27 +246,91 @@ namespace SharpPromise
 			{
 				if (task.IsFaulted)
 				{
-					onRejected(task.Exception);
-					completionSource.SetException(task.Exception);
+					try
+					{
+						onRejected(task.Exception);
+						completionSource.SetResult(default);
+					}
+					catch (Exception e)
+					{
+						completionSource.SetException(e);
+					}
 				}
 				else
 				{
-					onFulfilled(task.Result).ContinueWith(t =>
+					try
 					{
-						if (t.IsFaulted)
+						onFulfilled(task.Result).ContinueWith(t =>
 						{
-							completionSource.SetException(t.Exception);
-						}
-						else
-						{
-							completionSource.SetResult(t.Result);
-						}
-					});
+							if (t.IsFaulted)
+							{
+								completionSource.SetException(t.Exception);
+							}
+							else
+							{
+								completionSource.SetResult(t.Result);
+							}
+						});
+					}
+					catch (Exception e)
+					{
+						completionSource.SetException(e);
+					}
 				}
 			});
 #pragma warning restore CC0031 // Check for null before calling a delegate
 
 			return new Promise<TResult>(completionSource.Task);
+		}
+
+		public IPromise Then(Func<T, Task> onFulfilled) => Then(onFulfilled, (Action)null);
+		public IPromise Then(Func<T, Task> onFulfilled, Action onRejected) => Then(onFulfilled, ex => onRejected?.Invoke());
+		public IPromise Then(Func<T, Task> onFulfilled, Action<Exception> onRejected)
+		{
+			ValidCallbacks(onFulfilled, onRejected, nameof(onFulfilled), nameof(onRejected));
+
+			var completionSource = new TaskCompletionSource<int>();
+
+#pragma warning disable CC0031 // Check for null before calling a delegate
+			Task.ContinueWith(task =>
+			{
+				if (task.IsFaulted)
+				{
+					try
+					{
+						onRejected(task.Exception);
+						completionSource.SetResult(42);
+					}
+					catch (Exception e)
+					{
+						completionSource.SetException(e);
+					}
+				}
+				else
+				{
+					try
+					{
+						onFulfilled(task.Result).ContinueWith(t =>
+						{
+							if (t.IsFaulted)
+							{
+								completionSource.SetException(t.Exception);
+							}
+							else
+							{
+								completionSource.SetResult(42);
+							}
+						});
+					}
+					catch (Exception e)
+					{
+						completionSource.SetException(e);
+					}
+				}
+			});
+#pragma warning restore CC0031 // Check for null before calling a delegate
+
+			return new Promise(completionSource.Task);
 		}
 
 		public IPromise<TResult> Then<TResult>(Func<T, IPromise<TResult>> onFulfilled) => Then(onFulfilled, (Action)null);
