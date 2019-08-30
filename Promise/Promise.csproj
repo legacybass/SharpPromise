@@ -10,7 +10,9 @@
     <RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
     <PackageTags>promise, task</PackageTags>
     <PackageReleaseNotes>Change list:
-- Added Then method that handles returning a non-generic task, rather than returning a Promise&lt;Task&gt;</PackageReleaseNotes>
+- Added Then method that handles returning a non-generic task, rather than returning a Promise&lt;Task&gt;
+- Fixed bug in chained error handling
+- Added unit tests for Any methods</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
     <Version>1.6.0</Version>
     <NeutralLanguage>en</NeutralLanguage>
