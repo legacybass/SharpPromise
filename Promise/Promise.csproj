@@ -17,6 +17,7 @@
     <Version>1.6.0</Version>
     <NeutralLanguage>en</NeutralLanguage>
     <LangVersion>7.1</LangVersion>
+    <PackageLicenseUrl>https://github.com/legacybass/SharpPromise/blob/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
 </Project>
