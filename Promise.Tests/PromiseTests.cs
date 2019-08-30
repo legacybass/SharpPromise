@@ -840,37 +840,98 @@ namespace Promise.Tests
 		[TestMethod, TestCategory("Any")]
 		public void AnyReturnsIfAnyPromiseFinishes()
 		{
-			Assert.Fail();
+			IPromise resolvingPromise = new SharpPromise.Promise((resolve) =>
+			{
+				Task.Delay(500)
+				.ContinueWith(_ => resolve());
+			});
+
+			IPromise neverEndingPromise = new SharpPromise.Promise((resolve) =>
+			{
+
+			});
+
+			IPromise neverEndingStory = new SharpPromise.Promise((resolve) =>
+			{
+
+			});
+
+			bool result = false;
+
+			var promise = SharpPromise.Promise.Any(resolvingPromise, neverEndingPromise, neverEndingStory)
+			.Then(() => result = true);
+
+			var task = promise.AsTask();
+			task.Wait(700);
+
+			result.ShouldBeTrue();
 		}
 
 		[TestMethod, TestCategory("Any")]
 		public void AnyFailsIfNoPromisesFinish()
 		{
-			Assert.Fail();
+			IPromise resolvingPromise = new SharpPromise.Promise((resolve) =>
+			{
+
+			});
+
+			IPromise neverEndingPromise = new SharpPromise.Promise((resolve) =>
+			{
+
+			});
+
+			IPromise neverEndingStory = new SharpPromise.Promise((resolve) =>
+			{
+
+			});
+
+			bool result = false;
+
+			var promise = SharpPromise.Promise.Any(resolvingPromise, neverEndingPromise, neverEndingStory)
+			.Then(() => result = true);
+
+			var task = promise.AsTask();
+			task.Wait(700);
+
+			result.ShouldBeFalse();
 		}
 
 		[TestMethod, TestCategory("Any")]
 		public void AnyReturnsIfAnyTaskFinishes()
 		{
-			Assert.Fail();
+			var resolvingPromise = Task.Delay(500);
+
+			var neverEndingPromise = new TaskCompletionSource<int>().Task;
+
+			var neverEndingStory = new TaskCompletionSource<int>().Task;
+
+			bool result = false;
+
+			var promise = SharpPromise.Promise.Any(resolvingPromise, neverEndingPromise, neverEndingStory)
+			.Then(() => result = true);
+
+			var task = promise.AsTask();
+			task.Wait(700);
+
+			result.ShouldBeTrue();
 		}
 
 		[TestMethod, TestCategory("Any")]
 		public void AnyFailsIfNoTasksFinish()
 		{
-			Assert.Fail();
-		}
+			var resolvingPromise = new TaskCompletionSource<int>().Task;
+			var neverEndingPromise = new TaskCompletionSource<int>().Task;
+			var neverEndingStory = new TaskCompletionSource<int>().Task;
 
-		[TestMethod, TestCategory("Any")]
-		public void AnyReturnsValueOfFirstPromiseFinished()
-		{
-			Assert.Fail();
-		}
+			bool result = false;
 
-		[TestMethod, TestCategory("Any")]
-		public void AnyReturnsValueOfFirstTaskFinished()
-		{
-			Assert.Fail();
+			var promise = SharpPromise.Promise.Any(resolvingPromise, neverEndingPromise, neverEndingStory)
+			.Then(() => result = true);
+
+			var task = promise.AsTask();
+			task.Wait(700);
+
+			result.ShouldBeFalse();
 		}
 
 		[TestMethod, TestCategory("Finally")]
