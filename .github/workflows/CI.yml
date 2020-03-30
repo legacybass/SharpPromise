@@ -12,6 +12,7 @@ jobs:
       matrix:
         runs-on: [ubuntu-latest, windows-latest]
         configuration: [Release, Debug]
+        dotnet-version: [3.1.100, 2.2.8]
 
     runs-on: ${{ matrix.runs-on }}
 
@@ -20,10 +21,10 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.x
-    - name: Install dependencies
+        dotnet-version: ${{ matrix.dotnet-version }}
+    - name: Install dependencies on ${{ mstrix.dotnet-version }}
       run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Build for ${{ matrix.configuration }}
+      run: dotnet build --configuration ${{ matrix.configuration }} --no-restore
     - name: Test
       run: dotnet test --no-restore --verbosity normal
