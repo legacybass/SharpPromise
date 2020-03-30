@@ -2,16 +2,10 @@
 
 SharpPromise is a library intended to bring JavaScript's promise patterns to C#.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/0hd8gh5fci88hmtr?svg=true)](https://ci.appveyor.com/project/legacybass/sharppromise)
+[![Build status](![CI](https://github.com/legacybass/SharpPromise/workflows/CI/badge.svg))
 [![NuGet](https://img.shields.io/nuget/v/SharpPromise.svg?maxAge=2592000)](https://www.nuget.org/packages/SharpPromise/)
 [![.NET Standard](https://img.shields.io/badge/.net%20standard-2.0-blue.svg?logo=.net&logoColor=white&link=https://dotnet.github.io/&colorA=682079)](https://dotnet.github.io/)
 [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/legacybass/SharpPromise/blob/master/LICENSE)
-
-
-[![GitHub issues](https://img.shields.io/github/issues-raw/badges/shields.svg)](https://github.com/legacybass/SharpPromise/issues?q=is%3Aopen)
-[![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/badges/shields.svg)](https://github.com/legacybass/SharpPromise/issues?utf8=%E2%9C%93&q=is%3Aclosed)
-
-
 
 ## Why Promises in C#?
 The Task library gets very close, but still leaves a few things to be desired. For example, in JS you can use `somePromise.then(() => 42).then(result => console.log(result))` and have `42` logged to the console. In the Task library, the argument to `ContinueWith` is a task, and must be dealt with before you can get to the actual value. Promise's more clean interface makes it easy to get to the data you want, while still dealing with errors using the `catch` method.
