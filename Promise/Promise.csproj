@@ -1,22 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>SharpPromise</AssemblyName>
-    <RootNamespace>SharpPromise</RootNamespace>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Authors>Daniel Beus</Authors>
-    <Description>Fully compliant Promise library written in C#. Uses Task as the backing source and is fully compatible with async/await.</Description>
-    <RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
-    <PackageTags>promise, task</PackageTags>
-    <PackageReleaseNotes>Change list:
-- Added Then method that handles returning a non-generic task, rather than returning a Promise&lt;Task&gt;
-- Fixed bug in chained error handling
-- Added unit tests for Any methods</PackageReleaseNotes>
-    <PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
-    <Version>1.6.0</Version>
-    <NeutralLanguage>en</NeutralLanguage>
-    <LangVersion>7.1</LangVersion>
+	<TargetFrameworks>netstandard2.0;netstandard2.1;net5</TargetFrameworks>
+	<AssemblyName>SharpPromise</AssemblyName>
+	<RootNamespace>SharpPromise</RootNamespace>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<Authors>Daniel Beus</Authors>
+	<Description>Fully compliant Promise library written in C#. Uses Task as the backing source and is fully compatible with async/await.</Description>
+	<RepositoryUrl>https://github.com/legacybass/SharpPromise.git</RepositoryUrl>
+	<PackageTags>promise, task</PackageTags>
+	<PackageReleaseNotes>Change list:
+- Updated the IPromise&lt;T&gt; interface to expose methods that have been there, but have been hidden
+- Updated the IPromise&lt;T&gt; interface to handle one more type</PackageReleaseNotes>
+	<PackageProjectUrl>https://github.com/legacybass/SharpPromise</PackageProjectUrl>
+	<Version>1.7.0</Version>
+	<NeutralLanguage>en</NeutralLanguage>
+	<LangVersion>9.0</LangVersion>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+	<IncludeSymbols>true</IncludeSymbols>
+	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
 </Project>

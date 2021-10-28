@@ -94,26 +94,22 @@ namespace SharpPromise
 		protected Task<T> Task { get; set; }
 		protected override Task BackingTask { get => Task; }
 
-#pragma warning disable CC0031 // Check for null before calling a delegate
 		/// <summary>
 		/// Creates a promise that can be resolved with the passed in <see cref="Action{T}"/>.
 		/// The value passed to the <see cref="Action{T}"/> will be used as the parameter to any <see cref="Then(Action{T})"/> calls.
 		/// </summary>
 		/// <param name="callback">Callback that can use the first parameter to resolve the promise.</param>
-		public Promise(Action<Action<T>> callback) : this(callback == null ? null : (Action<Action<T>, Action>)((resolve, reject) => callback(resolve)))
-#pragma warning restore CC0031 // Check for null before calling a delegate
+		public Promise(Action<Action<T>> callback) : this(callback == null ? null : (Action<Action<T>, Action>)((resolve, reject) => callback?.Invoke(resolve)))
 		{
 		}
 
-#pragma warning disable CC0031 // Check for null before calling a delegate
 		/// <summary>
 		/// Creates a promise that can be resolved or rejected with the passed in <see cref="Action{T1, T2}"/>.
 		/// The value passed to the resolve <see cref="Action{T}"/> will be used as the parameter to any <see cref="Then(Action{T})"/> calls.
 		/// </summary>
 		/// <param name="callback">Callback that can use the first parameter to resolve the promise,
 		/// and the second parameter to reject the promise.</param>
-		public Promise(Action<Action<T>, Action> callback) : this(callback == null ? null : (Action<Action<T>, Action<Exception>>)((resolve, reject) => callback(resolve, () => reject(new Exception()))))
-#pragma warning restore CC0031 // Check for null before calling a delegate
+		public Promise(Action<Action<T>, Action> callback) : this(callback == null ? null : ((resolve, reject) => callback?.Invoke(resolve, () => reject?.Invoke(new Exception()))))
 		{
 		}
 
@@ -281,6 +277,56 @@ namespace SharpPromise
 #pragma warning restore CC0031 // Check for null before calling a delegate
 
 			return new Promise<TResult>(completionSource.Task);
+		}
+
+		public IPromise Then(Func<T, IPromise> onResolve) => Then(onResolve, (Action)null);
+
+		public IPromise Then(Func<T, IPromise> onResolve, Action onRejected) => Then(onResolve, ex => onRejected?.Invoke());
+
+		public IPromise Then(Func<T, IPromise> onResolve, Action<Exception> onRejected)
+		{
+			ValidCallbacks(onResolve, onRejected, nameof(onResolve), nameof(onRejected));
+
+			var completionSource = new TaskCompletionSource<int>();
+
+			Task.ContinueWith(task =>
+			{
+				if (task.IsFaulted)
+				{
+					try
+					{
+						onRejected?.Invoke(task.Exception);
+						completionSource.SetResult(42);
+					}
+					catch (Exception ex)
+					{
+						completionSource.SetException(ex);
+					}
+				}
+				else
+				{
+					try
+					{
+						var prom = onResolve?.Invoke(task.Result);
+
+						if (prom != null)
+						{
+							prom.Then(() => completionSource.SetResult(42))
+							.Catch(ex => completionSource.SetException(ex));
+						}
+						else
+						{
+							completionSource.SetResult(42);
+						}
+					}
+					catch (Exception ex)
+					{
+						completionSource.SetException(ex);
+					}
+				}
+			});
+
+			return new Promise(completionSource.Task);
 		}
 
 		public IPromise Then(Func<T, Task> onFulfilled) => Then(onFulfilled, (Action)null);

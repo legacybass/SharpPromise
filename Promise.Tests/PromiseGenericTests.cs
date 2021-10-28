@@ -120,7 +120,7 @@ namespace Promise.Tests
 		public async Task ThrowsOnNullResolvedCallback()
 		{
 			const int expected = 42;
-			await new Promise<int>(resolve => { resolve(expected); }).Then(null);
+			await new Promise<int>(resolve => { resolve(expected); }).Then((Func<int, IPromise>)null);
 			Assert.Fail("Null resolve method did not throw exception");
 		}
 

@@ -130,7 +130,6 @@ namespace SharpPromise
 		/// <param name="onFulfilled"><see cref="Func{TResult}"/> to be invoked when this promise is resolved</param>
 		/// <returns></returns>
 		IPromise Then(Func<Task> onFulfilled);
-
 		/// <summary>
 		/// Returns a new promise that will be resolved with resolved value of the
 		/// <see cref="Task"/> returned from the passed in <see cref="Func{TResult}"/>, or
@@ -262,6 +261,13 @@ namespace SharpPromise
 		/// <returns></returns>
 		IPromise<TResult> Then<TResult>(Func<T, Task<TResult>> onFulfilled, Action<Exception> onRejected);
 
+		IPromise Then(Func<T, IPromise> onResolve);
+		IPromise Then(Func<T, IPromise> onResolve, Action onRejected);
+		IPromise Then(Func<T, IPromise> onResolve, Action<Exception> onRejected);
+
+		IPromise<TResult> Then<TResult>(Func<T, IPromise<TResult>> onFulfilled);
+		IPromise<TResult> Then<TResult>(Func<T, IPromise<TResult>> onFulfilled, Action onRejected);
+		IPromise<TResult> Then<TResult>(Func<T, IPromise<TResult>> onFulfilled, Action<Exception> onRejected);
 
 		IPromise Then(Func<T, Task> onFulfilled);
 		IPromise Then(Func<T, Task> onFulfilled, Action onRejected);
